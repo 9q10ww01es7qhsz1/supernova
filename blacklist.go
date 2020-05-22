@@ -14,7 +14,7 @@ import (
 
 var blacklist = map[string]struct{}{}
 
-func isBlocked(req *dns.Msg) (blocked bool) {
+func isBlacklisted(req *dns.Msg) (blocked bool) {
 	if req.Opcode != dns.OpcodeQuery {
 		return
 	}

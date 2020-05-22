@@ -20,7 +20,7 @@ var (
 func handler(rw dns.ResponseWriter, req *dns.Msg) {
 	defer rw.Close()
 
-	if isBlocked(req) {
+	if isBlacklisted(req) {
 		if err := block(rw, req); err != nil {
 			log.Println(fmt.Errorf("failed to block request: %w", err))
 		}
