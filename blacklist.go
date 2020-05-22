@@ -1,24 +1,21 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
-	"log"
-	"os"
 	"strings"
 
+	"github.com/9q10ww01es7qhsz1/supernova/blacklist"
 	"github.com/miekg/dns"
 )
 
-var blacklist = map[string]struct{}{}
+var privBlacklist = blacklist.New(httpClient)
 
-func isBlacklisted(req *dns.Msg) (blacklisted bool) {
+func isBlacklisted(req *dns.Msg) bool {
 	if req.Opcode != dns.OpcodeQuery {
-		return
+		return false
 	}
 
 	if len(req.Question) != 1 {
-		return
+		return false
 	}
 
 	q := req.Question[0]
@@ -27,38 +24,8 @@ func isBlacklisted(req *dns.Msg) (blacklisted bool) {
 	case dns.TypeA:
 	case dns.TypeAAAA:
 	default:
-		return
+		return false
 	}
 
-	_, blacklisted = blacklist[strings.TrimRight(q.Name, ".")]
-
-	return
-}
-
-func fetchBlacklist(filename string) error {
-	f, err := os.Open(filename)
-	if err != nil {
-		return fmt.Errorf("failed to open blacklist: %w", err)
-	}
-	defer f.Close()
-
-	scanner := bufio.NewScanner(f)
-
-	for scanner.Scan() {
-		host := scanner.Text()
-
-		if host == "" || strings.HasPrefix(host, "#") {
-			continue
-		}
-
-		blacklist[host] = struct{}{}
-	}
-
-	if err = scanner.Err(); err != nil {
-		return fmt.Errorf("failed to scan response body: %w", err)
-	}
-
-	log.Println("blacklisted", len(blacklist), "hosts")
-
-	return nil
+	return privBlacklist.Contains(strings.TrimRight(q.Name, "."))
 }
