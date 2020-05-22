@@ -37,12 +37,6 @@ func New(httpClient *http.Client) *Blacklist {
 
 func (b *Blacklist) Watch(ctx context.Context) {
 	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
-
 		subs := b.copySubscriptions()
 
 		results := make([][]string, len(subs))
@@ -82,7 +76,11 @@ func (b *Blacklist) Watch(ctx context.Context) {
 			b.updateState(hosts)
 		}
 
-		time.Sleep(time.Minute)
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Minute):
+		}
 	}
 }
 
