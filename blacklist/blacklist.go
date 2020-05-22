@@ -35,12 +35,6 @@ func New(httpClient *http.Client) *Blacklist {
 	}
 }
 
-func (b *Blacklist) Subscribe(blacklistURL string) {
-	b.subscriptionsMu.Lock()
-	b.subscriptions[blacklistURL] = ""
-	b.subscriptionsMu.Unlock()
-}
-
 func (b *Blacklist) Watch(ctx context.Context) {
 	for {
 		select {
@@ -49,16 +43,39 @@ func (b *Blacklist) Watch(ctx context.Context) {
 		default:
 		}
 
+		subs := b.copySubscriptions()
+
+		result := make([][]string, len(subs))
+		index := 0
+
+		wg := sync.WaitGroup{}
+		wg.Add(len(subs))
+
+		for blacklistURL, sum := range subs {
+			blacklistURL, sum := blacklistURL, sum
+
+			localIndex := index
+			index++
+
+			go func() {
+				defer wg.Done()
+
+				hosts, err := b.updateList(ctx, blacklistURL, sum)
+				if err != nil {
+					log.Println(fmt.Errorf("failed to update subscription (%s): %w", blacklistURL, err))
+					return
+				}
+
+				result[localIndex] = hosts
+			}()
+		}
+
+		wg.Wait()
+
 		var hosts []string
 
-		for blacklistURL, sum := range b.copySubscriptions() {
-			newHosts, err := b.updateList(ctx, blacklistURL, sum)
-			if err != nil {
-				log.Println(fmt.Errorf("failed to update subscription (%s): %w", blacklistURL, err))
-				continue
-			}
-
-			hosts = append(hosts, newHosts...)
+		for _, part := range result {
+			hosts = append(hosts, part...)
 		}
 
 		if len(hosts) > 0 {
@@ -67,39 +84,6 @@ func (b *Blacklist) Watch(ctx context.Context) {
 
 		time.Sleep(time.Minute)
 	}
-}
-
-func (b *Blacklist) copySubscriptions() map[string]string {
-	b.subscriptionsMu.RLock()
-	defer b.subscriptionsMu.RUnlock()
-
-	copy := map[string]string{}
-
-	for blacklistURL, sum := range b.subscriptions {
-		copy[blacklistURL] = sum
-	}
-
-	return copy
-}
-
-func (b *Blacklist) updateList(ctx context.Context, blacklistURL, sum string) ([]string, error) {
-	hosts, newSum, err := b.fetch(ctx, blacklistURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch: %w", err)
-	}
-
-	if newSum == sum {
-		// log.Println("same hash", blacklistURL)
-		return nil, nil
-	}
-
-	b.subscriptionsMu.Lock()
-	b.subscriptions[blacklistURL] = newSum
-	b.subscriptionsMu.Unlock()
-
-	log.Println("blacklist subscription updated", blacklistURL, newSum)
-
-	return hosts, nil
 }
 
 func (b *Blacklist) fetch(ctx context.Context, blacklistURL string) ([]string, string, error) {
