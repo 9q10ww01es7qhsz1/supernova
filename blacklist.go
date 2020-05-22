@@ -61,8 +61,13 @@ func fetchBlacklist(blacklistURL string) error {
 	scanner := bufio.NewScanner(resp.Body)
 
 	for scanner.Scan() {
-		domain := scanner.Text()
-		blacklist[domain] = struct{}{}
+		host := scanner.Text()
+
+		if host == "" || strings.HasPrefix(host, "#") {
+			continue
+		}
+
+		blacklist[host] = struct{}{}
 	}
 
 	if err = scanner.Err(); err != nil {
