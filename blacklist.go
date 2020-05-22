@@ -58,22 +58,18 @@ func fetchBlacklist(blacklistURL string) error {
 		return fmt.Errorf("unexpected response status code: %d", resp.StatusCode)
 	}
 
-	var (
-		scanner = bufio.NewScanner(resp.Body)
-		counter int
-	)
+	scanner := bufio.NewScanner(resp.Body)
 
 	for scanner.Scan() {
 		domain := scanner.Text()
 		blacklist[domain] = struct{}{}
-		counter++
 	}
 
 	if err = scanner.Err(); err != nil {
 		return fmt.Errorf("failed to scan response body: %w", err)
 	}
 
-	log.Println("blacklisted", counter, "hosts")
+	log.Println("blacklisted", len(blacklist), "hosts")
 
 	return nil
 }
