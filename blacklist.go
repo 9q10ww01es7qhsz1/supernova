@@ -3,10 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
-	"net/http"
+	"os"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -41,24 +39,14 @@ func isBlacklisted(req *dns.Msg) (blocked bool) {
 	return
 }
 
-func fetchBlacklist(blacklistURL string) error {
-	req, err := http.NewRequest("GET", blacklistURL, nil)
+func fetchBlacklist(filename string) error {
+	f, err := os.Open(filename)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open blacklist: %w", err)
 	}
+	defer f.Close()
 
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		io.Copy(ioutil.Discard, resp.Body)
-		return fmt.Errorf("unexpected response status code: %d", resp.StatusCode)
-	}
-
-	scanner := bufio.NewScanner(resp.Body)
+	scanner := bufio.NewScanner(f)
 
 	for scanner.Scan() {
 		host := scanner.Text()
