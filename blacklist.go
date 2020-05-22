@@ -12,7 +12,7 @@ import (
 
 var blacklist = map[string]struct{}{}
 
-func isBlacklisted(req *dns.Msg) (blocked bool) {
+func isBlacklisted(req *dns.Msg) (blacklisted bool) {
 	if req.Opcode != dns.OpcodeQuery {
 		return
 	}
@@ -30,11 +30,7 @@ func isBlacklisted(req *dns.Msg) (blocked bool) {
 		return
 	}
 
-	_, blocked = blacklist[strings.TrimRight(q.Name, ".")]
-
-	if blocked {
-		log.Println("blocked", q.Name)
-	}
+	_, blacklisted = blacklist[strings.TrimRight(q.Name, ".")]
 
 	return
 }
