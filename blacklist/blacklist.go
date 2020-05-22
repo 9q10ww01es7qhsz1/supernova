@@ -45,7 +45,7 @@ func (b *Blacklist) Watch(ctx context.Context) {
 
 		subs := b.copySubscriptions()
 
-		result := make([][]string, len(subs))
+		results := make([][]string, len(subs))
 		index := 0
 
 		wg := sync.WaitGroup{}
@@ -66,7 +66,7 @@ func (b *Blacklist) Watch(ctx context.Context) {
 					return
 				}
 
-				result[localIndex] = hosts
+				results[localIndex] = hosts
 			}()
 		}
 
@@ -74,7 +74,7 @@ func (b *Blacklist) Watch(ctx context.Context) {
 
 		var hosts []string
 
-		for _, part := range result {
+		for _, part := range results {
 			hosts = append(hosts, part...)
 		}
 
