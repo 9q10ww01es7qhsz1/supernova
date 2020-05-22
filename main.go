@@ -22,7 +22,7 @@ func main() {
 
 	defaultBlacklistURL := "https://v.firebog.net/hosts/AdguardDNS.txt"
 
-	flag.StringVar(&addr, "addr", ":5353", "addr")
+	flag.StringVar(&addr, "addr", ":53", "addr")
 	flag.StringVar(&upstream, "upstream", "1.1.1.1:53", "upstream")
 	flag.StringVar(&blacklistURL, "blacklist", defaultBlacklistURL, "blacklist URL")
 	flag.Parse()
