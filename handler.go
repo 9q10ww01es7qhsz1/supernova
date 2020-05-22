@@ -20,8 +20,6 @@ var (
 func handler(rw dns.ResponseWriter, req *dns.Msg) {
 	defer rw.Close()
 
-	log.Println("req", req.Question[0].Name)
-
 	if isBlocked(req) {
 		if err := block(rw, req); err != nil {
 			log.Println(fmt.Errorf("failed to block request: %w", err))
@@ -35,8 +33,6 @@ func handler(rw dns.ResponseWriter, req *dns.Msg) {
 		log.Fatalln(fmt.Errorf("failed to exchange: %w", err))
 		return
 	}
-
-	// log.Println("resp", resp)
 
 	if err = rw.WriteMsg(resp); err != nil {
 		log.Println(fmt.Errorf("failed to reply: %w", err))
