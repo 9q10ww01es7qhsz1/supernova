@@ -35,7 +35,7 @@ func New(httpClient *http.Client) *Blacklist {
 	}
 }
 
-func (b *Blacklist) Watch(ctx context.Context) {
+func (b *Blacklist) Watch(ctx context.Context, interval time.Duration) {
 	for {
 		subs := b.copySubscriptions()
 
@@ -79,7 +79,7 @@ func (b *Blacklist) Watch(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(time.Minute):
+		case <-time.After(interval):
 		}
 	}
 }

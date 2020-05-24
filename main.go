@@ -36,7 +36,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go privBlacklist.Watch(ctx)
+	go privBlacklist.Watch(ctx, time.Minute*10)
 
 	dns.HandleFunc(".", handler)
 
